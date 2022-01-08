@@ -21,6 +21,8 @@
       <FILE id="sxQ7R9" name="Library.h" compile="0" resource="0" file="Source/Library.h"/>
       <FILE id="no1dmZ" name="Track.h" compile="0" resource="0" file="Source/Track.h"/>
     </GROUP>
+    <FILE id="q4WZew" name="ID3Tag.cpp" compile="1" resource="0" file="Source/ID3Tag.cpp"/>
+    <FILE id="SmEITr" name="ID3Tag.h" compile="0" resource="0" file="Source/ID3Tag.h"/>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_USE_MP3AUDIOFORMAT="1"
                JUCE_USE_FLAC="1" JUCE_USE_OGGVORBIS="1"/>
@@ -41,6 +43,22 @@
         <MODULEPATH id="juce_gui_basics" path="../../Frameworks/JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
+    <XCODE_MAC targetFolder="Builds/MacOSX">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" macOSDeploymentTarget="10.15" osxCompatibility="10.15 SDK"/>
+        <CONFIGURATION isDebug="0" name="Release" macOSDeploymentTarget="10.15" osxCompatibility="10.15 SDK"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../juce"/>
+        <MODULEPATH id="juce_audio_devices" path="../../juce"/>
+        <MODULEPATH id="juce_audio_formats" path="../../juce"/>
+        <MODULEPATH id="juce_core" path="../../juce"/>
+        <MODULEPATH id="juce_data_structures" path="../../juce"/>
+        <MODULEPATH id="juce_events" path="../../juce"/>
+        <MODULEPATH id="juce_graphics" path="../../juce"/>
+        <MODULEPATH id="juce_gui_basics" path="../../juce"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
   </EXPORTFORMATS>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>

@@ -5,10 +5,15 @@
 
 namespace musicus {
 
-	using std::string;
+std::vector<std::string> split_string(std::string s, std::string delimiter);
 
-	std::vector<string> split_string(string s, string delimiter);
+std::string get_file_ending(std::string f);
 
-	string get_file_ending(string f);
+unsigned int btoi(char* bytes, int size, int offset);
+
+std::string bytes_to_string(char* bytes, int start, int length);
+
+template <typename T>
+std::string print_bits(T);
 
 }

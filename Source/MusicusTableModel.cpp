@@ -18,12 +18,12 @@ int musicus::MusicusTableModel::getNumRows() {
             return library->getArtistCount();
         case musicus::MusicusTableType::ALBUMS:
             if (library->hasSelectedArtist()) {
-                return library->getSelectedArtist()->getAlbums()->size();
+                return (int)library->getSelectedArtist()->getAlbums()->size();
             }
             break;
         case musicus::MusicusTableType::SONGS: 
             if (library->hasSelectedAlbum()) {
-                return library->getSelectedAlbum()->getTracks()->size();
+                return (int)library->getSelectedAlbum()->getTracks()->size();
             }
     }
     return 0;

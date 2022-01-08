@@ -109,7 +109,7 @@ void MainComponent::loadConfigFile() {
     #elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     juce::File appConfig{juce::String{"settings.json"}};
     #elif __APPLE__
-    juce::File appConfig{juce::String{"settings.json"}};
+    juce::File appConfig{juce::String{"./settings.json"}};
     #endif
     if ( appConfig.exists() ) {
 

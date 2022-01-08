@@ -1,12 +1,13 @@
 #include "Library.h"
 #include "Track.h"
+#include "ID3Tag.h"
 #include "Utils.h"
 
 #include <iostream>
 #include <string>
 #include <filesystem>
 #include <vector>
-#include <id3/tag.h>
+//#include <id3/tag.h>
 
 namespace fs = std::filesystem;
 
@@ -15,6 +16,8 @@ using musicus::Artist;
 using musicus::Album;
 using musicus::Track;
 using musicus::split_string;
+using musicus::ID3Tag;
+using musicus::ID3Tag_Field;
 
 void readTagAndStore(Track*);
 string guessTrackInfo(string, string);
@@ -42,12 +45,7 @@ bool musicus::Library::initializeNewLibrary(string root_directory) {
 			this->addTrack(this->createTrackFromFile(f));
 		}
 	}
-
-	for (auto a : *this->artists) {
-		std::cout << a->getName() << std::endl;
-	}
-
-	return true;
+    return true;
 }
 
 bool musicus::Library::loadLibrary(string root_directory) {
@@ -72,10 +70,18 @@ Track* musicus::Library::createTrackFromFile(string audio_file) {
 }
 
 void readTagAndStore(Track* t) {
-	/*ID3_Tag tag(file.c_str());
+    ID3Tag tag(t->getFile());
+    t->setArtist(tag.getFieldAsUtf8(ID3Tag_Field::ARTIST));
+    t->setAlbum(tag.getFieldAsUtf8(ID3Tag_Field::ALBUM));
+    t->setSongName(tag.getFieldAsUtf8(ID3Tag_Field::TITLE));
+}
+
+/*
+void readTagAndStore(Track* t) {
+	ID3_Tag tag(file.c_str());
 	ID3_Frame* frame = tag.Find(ID3FID_COMPOSER);
 	if (frame) {
-        /*ID3_Field* field = frame->GetField(ID3FN_TEXT);
+        ID3_Field* field = frame->GetField(ID3FN_TEXT);
         char *str;
         field->Get(str, 1024);
         if ( !str ) {
@@ -95,13 +101,14 @@ void readTagAndStore(Track* t) {
 	    }
 	   	delete field_iter;
     }
-    /*ID3_Tag::Iterator* iter = tag.CreateIterator();
+    ID3_Tag::Iterator* iter = tag.CreateIterator();
     ID3_Frame* frame = NULL;
     while (NULL != (frame = iter->GetNext())) {
     	std::cout << "process field" << std::endl;
     }
-    delete iter;*/
+    delete iter;
 }
+*/
 
 // Use File name for Track Info if an Id3 Tag is not available
 string guessTrackInfo(string field, string file_path) {
@@ -114,7 +121,7 @@ string guessTrackInfo(string field, string file_path) {
 		string file_name = path_parts[path_parts.size() - 1];
 		return split_string(file_name, ".")[0];
 	}
-	return "";
+	return "Unknown";
 }
 
 void musicus::Library::addTrack(Track *t) {
@@ -143,7 +150,7 @@ musicus::LibraryStatus musicus::Library::getLibraryStatus() {
 }
 
 int musicus::Library::getArtistCount() {
-	return artists->size();
+	return (int)artists->size();
 }
 
 string musicus::Library::getArtistNameAt(int i) {
