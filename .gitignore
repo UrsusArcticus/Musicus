@@ -1,0 +1,5 @@
+**/JuceLibraryCode
+**/.kdev4
+Musicus.kdev4
+Builds/*
+.idea/
