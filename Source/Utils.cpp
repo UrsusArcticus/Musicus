@@ -37,16 +37,13 @@ string musicus::get_file_ending(string f) {
 	return parts[parts.size() - 1];
 }
 
-unsigned int musicus::btoi(char* bytes, int size, int offset) {
-    unsigned int result = 0x00;
-    for(int i = 0; i < size; i++) {
-        result = result << 8;
-        result = result | (unsigned char) bytes[offset + i];
-    }
-    return result;
+unsigned int musicus::read_int_from_bytes(char* bytes, int start_position) {
+    char *a = new char[4] { bytes[start_position + 3], bytes[start_position + 2],
+        bytes[start_position + 1], bytes[start_position]};
+    return *reinterpret_cast<int*>(a);
 }
 
-std::string musicus::bytes_to_string(char* bytes, int start, int length) {
+std::string musicus::read_string_from_bytes(char* bytes, int start, int length) {
     char s[length + 1];
     for (int i = start; i < length; i++) {
         s[i - start] = bytes[i];
@@ -63,11 +60,12 @@ std::string musicus::print_bits(T value) {
     int size_in_bits = sizeof(T) * 8;
     std:string r = "";
     unsigned int p;
-    for (int i = 0; i < size_in_bits; i++) {
+    for (int i = size_in_bits - 1; i >= 0 ; i--) {
         p = (int)pow(2, i);
         r.append(((p & value) == p) ? "1" : "0");
     }
     return r;
 }
 template std::string musicus::print_bits(char value);
+template std::string musicus::print_bits(int value);
 

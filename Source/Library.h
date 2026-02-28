@@ -59,6 +59,8 @@ namespace musicus {
 		string getAlbumNameAt(int);
 
 		string getSongNameAt(int);
+        
+        string getSongTrackAt(int);
 
 		bool hasSelectedArtist();
 

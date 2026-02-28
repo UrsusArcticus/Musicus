@@ -22,8 +22,7 @@ using musicus::ID3_Header;
 using musicus::ID3Tag_Version;
 using musicus::ID3_Frame;
 using musicus::ID3Tag_Field;
-using musicus::ID3_Text_Frame_Content;
-using musicus::btoi;
+using musicus::read_int_from_bytes;
 
 /*
   The ID3 Tag is given in 4 Bytes but the 7th Bit in each Byte is set to zero
@@ -69,11 +68,9 @@ ID3_Header* parse_tag_header(char* buffer) {
     header->major_version = buffer[3];
     header->minor_version = buffer[4];
     header->flags = buffer[5];
-    header->tag_size = tagsize_decode(btoi(buffer, 4, 6));
-    cout << "Header Size" << header->tag_size << endl;
+    header->tag_size = tagsize_decode(read_int_from_bytes(buffer, 6));
     if (((header->flags&(1<<6)) == (1<<6))) { // Check for extended headers
-        header->extended_header_size = tagsize_decode(btoi(buffer, 4, 12));
-        cout << "extended header exists" << endl;
+        header->extended_header_size = tagsize_decode(read_int_from_bytes(buffer, 12));
     } else {
         header->extended_header_size = 0;
     }
@@ -88,21 +85,43 @@ ID3Tag_Version get_tag_version(ID3_Header* header) {
     return ID3Tag_Version::NO_COMPATIBLE_TAG;
 }
 
+bool has_encoding_byte(char* frame_id) {
+    if (strcmp(frame_id, "TPE1") == 0) {
+        return true;
+    }
+    if (strcmp(frame_id, "TALB") == 0) {
+        return true;
+    }
+    if (strcmp(frame_id, "TIT2") == 0) {
+        return true;
+    }
+    return false;
+}
+
 ID3_Frame* parse_frame(char* bytes, int position, ID3Tag_Version version) {
     ID3_Frame* frame = new ID3_Frame();
     memcpy(frame->frame_id, bytes + position, 4);
+    frame->frame_id[4] = '\0';
+    std::cout << "Frame ID: " << frame->frame_id << endl;
     if(memcmp(frame->frame_id, "\0\0\0\0", 4) == 0) {
         delete frame;
         return nullptr;
     }
-    frame->size = btoi(bytes, 4, position + 4);
+    frame->size = read_int_from_bytes(bytes, position + 4);
     if (version == ID3Tag_Version::ID3v24) {
         frame->size = tagsize_decode(frame->size);
     }
+    
     memcpy(frame->flags, bytes + position + 8, 2);
-    frame->data = (char*) malloc(frame->size * sizeof(char));
-    memcpy(frame->data, bytes + position + 10, frame->size);
-    std::cout << "Frame ID: " << frame->frame_id << " Frame Content: " << frame->data << endl;
+    frame->unicode = has_encoding_byte(frame->frame_id) && bytes[position + 10] > 0;
+    frame->body = new char [frame->size + 1];
+    
+    // +13 => 10 (Header) + 1 (Text Encoding byte) + 2 (Unicode BOM)
+    memcpy(frame->body, bytes + position + (frame->unicode ? 13 : 10), frame->size - (frame->unicode ? 3 : 0));
+    if (frame->unicode) {
+        frame->body_size = frame->size - 2; // Die 2 byte für das Unicode BOM wieder abziehen
+    }
+    frame->body[frame->body_size] = '\0';
     return frame;
 }
 
@@ -114,6 +133,12 @@ std::string get_frame_id(ID3Tag_Field field) {
             return "TALB";
         case ID3Tag_Field::TITLE:
             return "TIT2";
+        case ID3Tag_Field::COMPOSER:
+            return "TCOM";
+        case ID3Tag_Field::TRACK:
+            return "TRCK";
+        case ID3Tag_Field::PICTURE:
+            return "APIC";
     }
     return "";
 }
@@ -133,10 +158,11 @@ musicus::ID3Tag::ID3Tag(string file_name) {
             return;
         }
         this->header = header;
-        int position = 10 + header->extended_header_size; // 10 is the size of the header
+        int position = 10 + header->extended_header_size; // 10 is the size of the tag header
         ID3_Frame* frame;
+        ID3Tag_Version version = get_tag_version(header);
         while (position < header->tag_size) {
-            frame = parse_frame(file_buffer, position, get_tag_version(header));
+            frame = parse_frame(file_buffer, position, version);
             if (frame == nullptr) {
                 break;
             }
@@ -148,37 +174,24 @@ musicus::ID3Tag::ID3Tag(string file_name) {
     initialized = true;
 }
 
-ID3_Text_Frame_Content* musicus::ID3Tag::getField(ID3Tag_Field field) {
+ID3_Frame* musicus::ID3Tag::getFrame(ID3Tag_Field field) {
     string frame_id = get_frame_id(field);
-    std::cout << "Frame ID: " << frame_id << std::endl;
     for (int i = 0; i < frames.size(); i++) {
-        if (musicus::bytes_to_string(frames[i]->frame_id, 0, 4) == frame_id) {
-            ID3_Text_Frame_Content* content = new ID3_Text_Frame_Content();
-            content->size = frames[i]->size - 1;
-            content->is_unicode = (bool)frames[i]->data[0];
-            content->text = (char*) malloc(content->size * sizeof(char));
-            memcpy(content->text, frames[i]->data + 1, content->size);
-            std::cout << content->text << endl;
-            return content;
+        if (musicus::read_string_from_bytes(frames[i]->frame_id, 0, 4) == frame_id) {
+            return frames[i];
         }
     }
     return nullptr;
 }
 
+string musicus::ID3Tag::getField(ID3Tag_Field field) {
+    ID3_Frame* frame = getFrame(field);
+    return string(frame->body);
+}
+
 string musicus::ID3Tag::getFieldAsUtf8(ID3Tag_Field field) {
-    ID3_Text_Frame_Content* content = getField(field);
-    if ( content == nullptr || !content->is_unicode ) {
-        return nullptr;
-    }
-    u16string field_string = u"";
-    for (int i = 0; i < content->size; i += 2) {
-        if ((i + 1) >= content->size) {
-            break;
-        }
-        char16_t first_char = (char16_t)content->text[i];
-        char16_t second_char = content->text[i+1];
-        field_string.append(1, (first_char << 8) | second_char);
-    }
-    std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
-    return converter.to_bytes(field_string);
+    ID3_Frame* frame = getFrame(field);
+    u16string text_ucs(reinterpret_cast<const char16_t*>(frame->body));
+    string text = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t>{}.to_bytes(text_ucs);
+    return text;
 }

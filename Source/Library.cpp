@@ -7,7 +7,6 @@
 #include <string>
 #include <filesystem>
 #include <vector>
-//#include <id3/tag.h>
 
 namespace fs = std::filesystem;
 
@@ -74,6 +73,8 @@ void readTagAndStore(Track* t) {
     t->setArtist(tag.getFieldAsUtf8(ID3Tag_Field::ARTIST));
     t->setAlbum(tag.getFieldAsUtf8(ID3Tag_Field::ALBUM));
     t->setSongName(tag.getFieldAsUtf8(ID3Tag_Field::TITLE));
+    t->setTrack(tag.getField(ID3Tag_Field::TRACK));
+    t->setComposer(tag.getFieldAsUtf8(ID3Tag_Field::COMPOSER));
 }
 
 /*
@@ -162,6 +163,13 @@ string musicus::Library::getSongNameAt(int i) {
 		return selectedAlbum->getTracks()->at(i)->getSongName();
 	}
 	return "";
+}
+
+string musicus::Library::getSongTrackAt(int i) {
+    if ( selectedAlbum && i < selectedAlbum->getTracks()->size() ) {
+        return selectedAlbum->getTracks()->at(i)->getTrack();
+    }
+    return "";
 }
 
 void musicus::Library::setLibraryReadyEventHandler(void(*handler)()) {

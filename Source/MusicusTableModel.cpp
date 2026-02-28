@@ -43,7 +43,13 @@ void musicus::MusicusTableModel::paintCell(juce::Graphics& g, int rowNumber, int
             break;
         case musicus::MusicusTableType::SONGS:
             if (library->hasSelectedAlbum()) {
-                g.drawText (library->getSongNameAt(rowNumber), 2, 0, width - 4, height, juce::Justification::centredLeft, true);
+                if (columnId == 1) {
+                    g.drawText(library->getSongTrackAt(rowNumber), 2, 0, width - 4, height,
+                               juce::Justification::centredLeft, true);
+                } else {
+                    g.drawText (library->getSongNameAt(rowNumber), 2, 0, width - 4, height,
+                                juce::Justification::centredLeft, true);
+                }
             }
     }
     //g.setColour (this->backgroundColor);

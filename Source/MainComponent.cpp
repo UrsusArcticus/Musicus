@@ -95,8 +95,9 @@ void MainComponent::showLibraryView() {
     songTableModel->setColours(getLookAndFeel().findColour(juce::ListBox::textColourId),
                                     getLookAndFeel().findColour(juce::ListBox::backgroundColourId));
     songTableModel->setLibrary(musicLibrary);
-    songTable.getHeader().addColumn("Song Name", 1, 200);
-    songTable.getHeader().addColumn("Duration", 2, 100);
+    songTable.getHeader().addColumn("Track", 1, 20);
+    songTable.getHeader().addColumn("Song Name", 2, 200);
+    //songTable.getHeader().addColumn("Duration", 3, 100);
     songTable.setModel(songTableModel);
 
     view = MusicusViewType::LIBRARY;

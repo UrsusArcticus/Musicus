@@ -26,22 +26,21 @@ struct ID3_Header {
 };
 
 struct ID3_Frame {
-    char frame_id[4];
+    char frame_id[5];
     unsigned int size;
     char flags[2];
-    char* data;
-};
-
-struct ID3_Text_Frame_Content {
-    int size;
-    bool is_unicode; // If ISO-8859-1 is used this flag is false, if Unicode is used this flag is true;
-    char* text;
+    bool unicode; // If ISO-8859-1 is used this flag is false, if Unicode is used this flag is true;
+    unsigned int body_size;
+    char* body;
 };
 
 enum ID3Tag_Field {
     ARTIST,
     ALBUM,
-    TITLE
+    TITLE,
+    COMPOSER,
+    TRACK,
+    PICTURE
 };
 
 class ID3Tag {
@@ -50,7 +49,8 @@ class ID3Tag {
     std::vector<ID3_Frame*> frames;
 public:
     ID3Tag(std::string file);
-    ID3_Text_Frame_Content* getField(ID3Tag_Field field);
+    ID3_Frame* getFrame(ID3Tag_Field field);
+    std::string getField(ID3Tag_Field field);
     std::string getFieldAsUtf8(ID3Tag_Field field);
 };
 }
