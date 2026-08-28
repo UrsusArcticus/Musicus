@@ -22,6 +22,7 @@ using musicus::ID3_Header;
 using musicus::ID3Tag_Version;
 using musicus::ID3_Frame;
 using musicus::ID3Tag_Field;
+using musicus::ID3_PictureFrame;
 using musicus::read_int_from_bytes;
 
 /*
@@ -102,7 +103,6 @@ ID3_Frame* parse_frame(char* bytes, int position, ID3Tag_Version version) {
     ID3_Frame* frame = new ID3_Frame();
     memcpy(frame->frame_id, bytes + position, 4);
     frame->frame_id[4] = '\0';
-    std::cout << "Frame ID: " << frame->frame_id << endl;
     if(memcmp(frame->frame_id, "\0\0\0\0", 4) == 0) {
         delete frame;
         return nullptr;
@@ -170,6 +170,7 @@ musicus::ID3Tag::ID3Tag(string file_name) {
             position += frame->size + 10; // 10 is the size of the frame header
         }
         delete[] file_buffer;
+        getPicture();
     }
     initialized = true;
 }
@@ -194,4 +195,26 @@ string musicus::ID3Tag::getFieldAsUtf8(ID3Tag_Field field) {
     u16string text_ucs(reinterpret_cast<const char16_t*>(frame->body));
     string text = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t>{}.to_bytes(text_ucs);
     return text;
+}
+
+ID3_PictureFrame* musicus::ID3Tag::getPicture() {
+    string frame_id = get_frame_id(ID3Tag_Field::PICTURE);
+    for ( int i = 0; i < frames.size(); i++) {
+        if (musicus::read_string_from_bytes(frames[i]->frame_id, 0, 4) == frame_id) {
+            ID3_Frame* frame = frames[i];
+            ID3_PictureFrame *picture_frame = new ID3_PictureFrame();
+            picture_frame->text_encoding = frame->body[0];
+            picture_frame->mime_type = musicus::read_string_from_bytes(frame->body, 1);
+            int i = (int)picture_frame->mime_type.length() + 2;
+            picture_frame->picture_type = frame->body[i];
+            i++;
+            picture_frame->description = musicus::read_string_from_bytes(frame->body, i);
+            i += picture_frame->description.length() + 1;
+            picture_frame->size = (unsigned int)(frame->size - i);
+            picture_frame->data = new char[picture_frame->size];
+            memcpy(picture_frame->data, frame->body + i, picture_frame->size);
+            return picture_frame;
+        }
+    }
+    return nullptr;
 }

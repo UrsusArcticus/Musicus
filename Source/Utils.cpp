@@ -43,9 +43,17 @@ unsigned int musicus::read_int_from_bytes(char* bytes, int start_position) {
     return *reinterpret_cast<int*>(a);
 }
 
+std::string musicus::read_string_from_bytes(char *bytes, int start_position) {
+    int i = start_position;
+    while ( bytes[i] != 0 ) {
+        i++;
+    }
+    return read_string_from_bytes(bytes, start_position, i - start_position);
+}
+
 std::string musicus::read_string_from_bytes(char* bytes, int start, int length) {
     char s[length + 1];
-    for (int i = start; i < length; i++) {
+    for (int i = start; i < (start + length); i++) {
         s[i - start] = bytes[i];
     }
     s[length] = '\0';

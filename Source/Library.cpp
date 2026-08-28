@@ -1,24 +1,26 @@
 #include "Library.h"
-#include "Track.h"
+#include "Song.h"
 #include "ID3Tag.h"
 #include "Utils.h"
+#include "simdjson.h"
 
-#include <iostream>
 #include <string>
 #include <filesystem>
 #include <vector>
+#include <fstream>
 
 namespace fs = std::filesystem;
 
+using std::string;
 using std::vector;
 using musicus::Artist;
 using musicus::Album;
-using musicus::Track;
+using musicus::Song;
 using musicus::split_string;
 using musicus::ID3Tag;
 using musicus::ID3Tag_Field;
 
-void readTagAndStore(Track*);
+void readTagAndStore(Song*);
 string guessTrackInfo(string, string);
 
 musicus::Library::Library() {
@@ -41,18 +43,15 @@ bool musicus::Library::initializeNewLibrary(string root_directory) {
 	for (const auto & entry : fs::recursive_directory_iterator(root_directory)) {
 		string f = entry.path();
 		if (has_audiofile_ending(f)) {
-			this->addTrack(this->createTrackFromFile(f));
+			this->addSong(this->createSongFromFile(f));
 		}
 	}
+    this->status = LibraryStatus::MODIFIED;
     return true;
 }
 
-bool musicus::Library::loadLibrary(string root_directory) {
-	return true;
-}
-
-Track* musicus::Library::createTrackFromFile(string audio_file) {
-	Track* t = new Track();
+Song* musicus::Library::createSongFromFile(string audio_file) {
+	Song* t = new Song();
 	t->setFile(audio_file);
 	readTagAndStore(t);
 	string relative_audiofile_path = audio_file.substr(this->root_directory.length() + 1);
@@ -68,7 +67,7 @@ Track* musicus::Library::createTrackFromFile(string audio_file) {
 	return t;
 }
 
-void readTagAndStore(Track* t) {
+void readTagAndStore(Song* t) {
     ID3Tag tag(t->getFile());
     t->setArtist(tag.getFieldAsUtf8(ID3Tag_Field::ARTIST));
     t->setAlbum(tag.getFieldAsUtf8(ID3Tag_Field::ALBUM));
@@ -77,41 +76,7 @@ void readTagAndStore(Track* t) {
     t->setComposer(tag.getFieldAsUtf8(ID3Tag_Field::COMPOSER));
 }
 
-/*
-void readTagAndStore(Track* t) {
-	ID3_Tag tag(file.c_str());
-	ID3_Frame* frame = tag.Find(ID3FID_COMPOSER);
-	if (frame) {
-        ID3_Field* field = frame->GetField(ID3FN_TEXT);
-        char *str;
-        field->Get(str, 1024);
-        if ( !str ) {
-        	std::cout << "str ist null" << std::endl;
-        }
-
-        std::cout << file << std::endl;
-        // use an std::auto_ptr here to handle object cleanup automatically
-		ID3_Frame::Iterator* field_iter = frame->CreateIterator();
-		ID3_Field* myField = NULL;
-		while (NULL != (myField = field_iter->GetNext()))
-		{
-			std::cout << "Test\n\n" << std::endl;
-			if ( myField->GetRawText() != NULL ) {
-		    	std::cout << myField->GetRawText() << std::endl;
-			}
-	    }
-	   	delete field_iter;
-    }
-    ID3_Tag::Iterator* iter = tag.CreateIterator();
-    ID3_Frame* frame = NULL;
-    while (NULL != (frame = iter->GetNext())) {
-    	std::cout << "process field" << std::endl;
-    }
-    delete iter;
-}
-*/
-
-// Use File name for Track Info if an Id3 Tag is not available
+// Use File name for Track Info if an Id3 Tag is not available or can not be read
 string guessTrackInfo(string field, string file_path) {
 	vector<string> path_parts = split_string(file_path, "/");
 	if ( field == "artist" && path_parts.size() >= 3 ) {
@@ -125,7 +90,7 @@ string guessTrackInfo(string field, string file_path) {
 	return "Unknown";
 }
 
-void musicus::Library::addTrack(Track *t) {
+void musicus::Library::addSong(Song *t) {
 	for (auto artist : *this->artists) {
 		if (t->getArtist() == artist->getName()) {
 			for (auto album: *artist->getAlbums()) {
@@ -159,15 +124,15 @@ string musicus::Library::getArtistNameAt(int i) {
 }
 
 string musicus::Library::getSongNameAt(int i) {
-	if ( selectedAlbum && i < selectedAlbum->getTracks()->size() ) {
-		return selectedAlbum->getTracks()->at(i)->getSongName();
+	if ( selectedAlbum && i < selectedAlbum->getSongs()->size() ) {
+		return selectedAlbum->getSongs()->at(i)->getSongName();
 	}
 	return "";
 }
 
 string musicus::Library::getSongTrackAt(int i) {
-    if ( selectedAlbum && i < selectedAlbum->getTracks()->size() ) {
-        return selectedAlbum->getTracks()->at(i)->getTrack();
+    if ( selectedAlbum && i < selectedAlbum->getSongs()->size() ) {
+        return selectedAlbum->getSongs()->at(i)->getTrack();
     }
     return "";
 }
@@ -199,17 +164,17 @@ void musicus::Library::selectAlbumAt(int index) {
 }
 
 void musicus::Library::selectSongAt(int index) {
-	if (selectedAlbum != nullptr && index < selectedAlbum->getTracks()->size()) {
-		selectedSong = selectedAlbum->getTracks()->at(index);
+	if (selectedAlbum != nullptr && index < selectedAlbum->getSongs()->size()) {
+		selectedSong = selectedAlbum->getSongs()->at(index);
 		if (songSelectedHandler) {
 			songSelectedHandler(selectedSong);
 		}
 	}
 }
 
-Track* musicus::Library::getSongOfSelectedAlbumAt(int index) {
-	if (selectedAlbum != nullptr && index < selectedAlbum->getTracks()->size()) {
-		return selectedAlbum->getTracks()->at(index);
+Song* musicus::Library::getSongOfSelectedAlbumAt(int index) {
+	if (selectedAlbum != nullptr && index < selectedAlbum->getSongs()->size()) {
+		return selectedAlbum->getSongs()->at(index);
 	}
 	return nullptr;
 }
@@ -249,6 +214,93 @@ void musicus::Library::onAlbumSelect(std::function<void()> handler) {
 	this->albumSelectedHandler = handler;
 }
 
-void musicus::Library::onSongSelect(std::function<void(Track*)> handler) {
+void musicus::Library::onSongSelect(std::function<void(Song*)> handler) {
 	this->songSelectedHandler = handler;
+}
+
+bool musicus::Library::loadLibrary(string root_directory) {
+    if (this->status != LibraryStatus::EMPTY) return false;
+    simdjson::ondemand::parser parser;
+    string fp = root_directory.append("/.metadata.musicuslib");
+    auto text = simdjson::padded_string::load(fp);
+    auto document = parser.iterate(text);
+    auto root_object = document.get_object();
+    auto data = root_object.find_field("data");
+    for (auto artist_object : data.get_array()) {
+        Artist *artist = new Artist(string{artist_object.find_field("n").get_string().value()});
+        for (auto album_object : artist_object.find_field("a").get_array()) {
+            Album *album = new Album(string{album_object.find_field("n").get_string().value()});
+            for (auto song_object : album_object.find_field("s").get_array()) {
+                Song *song = new Song();
+                song->setSongName(string{song_object.find_field("n").get_string().value()});
+                song->setFile(string{song_object.find_field("f").get_string().value()});
+                song->setTrack(string{song_object.find_field("t").get_string().value()});
+                song->setComposer(string{song_object.find_field("c").get_string().value()});
+                album->addTrack(song);
+            }
+            artist->addAlbum(album);
+        }
+        artists->push_back(artist);
+    }
+    return true;
+}
+
+bool musicus::Library::saveLibrary() {
+    if ( this->status != LibraryStatus::MODIFIED) return false;
+    simdjson::builder::string_builder builder;
+    builder.start_object();
+    builder.escape_and_append_with_quotes("data");
+    builder.append_colon();
+    builder.start_array();
+    for (auto artist : *artists) {
+        builder.start_object();
+        builder.append_key_value("n", artist->getName());
+        builder.append_comma();
+        builder.escape_and_append_with_quotes("a");
+        builder.append_colon();
+        builder.start_array();
+        for (auto album : *artist->getAlbums()) {
+            builder.start_object();
+            builder.append_key_value("n", album->getName());
+            builder.append_comma();
+            builder.escape_and_append_with_quotes("s");
+            builder.append_colon();
+            builder.start_array();
+            for (auto song : *album->getSongs()) {
+                builder.start_object();
+                builder.append_key_value("n", song->getSongName());
+                builder.append_comma();
+                builder.append_key_value("f", song->getFile());
+                builder.append_comma();
+                builder.append_key_value("t", song->getTrack());
+                builder.append_comma();
+                builder.append_key_value("c", song->getComposer());
+                builder.end_object();
+                builder.append_comma();
+            }
+            builder.end_array();
+            builder.append_comma();
+        }
+        builder.end_array();
+        builder.append_comma();
+    }
+    builder.end_array();
+    builder.end_object();
+    builder.end_object();
+    std::string_view contents{builder};
+    string fp = root_directory.append("/.metadata.musicuslib");
+    std::ofstream file{fp};
+    file << string{contents.begin(), contents.end()};
+    file.close();
+    this->status = LibraryStatus::LOADED;
+    return true;
+}
+
+musicus::SongImage musicus::Library::loadSongImage(Song *t) {
+    ID3Tag tag(t->getFile());
+    ID3_PictureFrame *frame = tag.getPicture();
+    SongImage img;
+    img.data = frame->data;
+    img.size = frame->size;
+    return img;
 }

@@ -34,6 +34,15 @@ struct ID3_Frame {
     char* body;
 };
 
+struct ID3_PictureFrame {
+    char text_encoding;
+    std::string mime_type;
+    char picture_type;
+    std::string description;
+    unsigned int size;
+    char *data;
+};
+
 enum ID3Tag_Field {
     ARTIST,
     ALBUM,
@@ -52,5 +61,6 @@ public:
     ID3_Frame* getFrame(ID3Tag_Field field);
     std::string getField(ID3Tag_Field field);
     std::string getFieldAsUtf8(ID3Tag_Field field);
+    ID3_PictureFrame* getPicture();
 };
 }

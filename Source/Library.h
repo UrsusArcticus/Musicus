@@ -9,7 +9,8 @@ namespace musicus {
 	enum LibraryStatus {
 		EMPTY,
 		LOADING,
-		READY
+		MODIFIED,
+        LOADED
 	};
 	
 	class Library {
@@ -19,24 +20,20 @@ namespace musicus {
 		LibraryStatus status = LibraryStatus::EMPTY;
 		Artist* selectedArtist = nullptr;
 		Album* selectedAlbum = nullptr;
-		Track* selectedSong = nullptr;
+		Song* selectedSong = nullptr;
 		void(*libraryReadyHandler)();
 		void(*libraryLoadingHandler)();
 		std::function<void()> artistSelectedHandler;
 		std::function<void()> albumSelectedHandler;
-		std::function<void(Track*)> songSelectedHandler;
+		std::function<void(Song*)> songSelectedHandler;
 
-		Track* createTrackFromFile(string);
-		void addTrack(Track *t);
+		Song* createSongFromFile(string);
+		void addSong(Song *t);
 
 	public:
 		Library();
 
 		bool initializeNewLibrary(string root_directory);
-
-		bool loadLibrary(string root_directory);
-
-		bool saveLibrary();
 
 		LibraryStatus getLibraryStatus();
 
@@ -54,7 +51,7 @@ namespace musicus {
 
 		void selectSongAt(int);
 
-		Track* getSongOfSelectedAlbumAt(int);
+		Song* getSongOfSelectedAlbumAt(int);
 
 		string getAlbumNameAt(int);
 
@@ -70,7 +67,7 @@ namespace musicus {
 
 		Album* getSelectedAlbum();
 
-		Track* getSelectedSong();
+		Song* getSelectedSong();
 
 		bool hasSelectedSong();
 
@@ -78,6 +75,13 @@ namespace musicus {
 
 		void onAlbumSelect(std::function<void()> handler);
 
-		void onSongSelect(std::function<void(Track*)> handler);
-	};
+		void onSongSelect(std::function<void(Song*)> handler);
+        
+        bool loadLibrary(string root_directory);
+
+        bool saveLibrary();
+        
+        SongImage loadSongImage(Song *);
+        
+    };
 }

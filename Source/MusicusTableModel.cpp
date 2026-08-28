@@ -23,7 +23,7 @@ int musicus::MusicusTableModel::getNumRows() {
             break;
         case musicus::MusicusTableType::SONGS: 
             if (library->hasSelectedAlbum()) {
-                return (int)library->getSelectedAlbum()->getTracks()->size();
+                return (int)library->getSelectedAlbum()->getSongs()->size();
             }
     }
     return 0;

@@ -7,7 +7,9 @@
 */
 
 #include <JuceHeader.h>
+#include "Config.h"
 #include "MainComponent.h"
+#include <iostream>
 
 //==============================================================================
 class MusicusApplication  : public juce::JUCEApplication
@@ -57,6 +59,8 @@ public:
     */
     class MainWindow    : public juce::DocumentWindow
     {
+        MainComponent *mainCmp;
+        musicus::Config *config;
     public:
         MainWindow (juce::String name)
             : DocumentWindow (name,
@@ -65,7 +69,17 @@ public:
                               DocumentWindow::allButtons)
         {
             setUsingNativeTitleBar (true);
-            setContentOwned (new MainComponent(), true);
+            mainCmp = new MainComponent();
+            mainCmp->set_library_created_handler([this](string path) { config->setLibraryPath(path);});
+            setContentOwned (mainCmp, true);
+            config = new musicus::Config();
+            config->loadConfig();
+            if ( config->libraryExists() ) {
+                mainCmp->getMusicLibrary()->loadLibrary(config->getLibraryPath());
+            } else {
+                //juce::NativeMessageBox::(juce::MessageBoxIconType::WarningIcon, "", "");
+                cout << "Lib existiert nicht" << endl;
+            }
 
            #if JUCE_IOS || JUCE_ANDROID
             setFullScreen (true);
@@ -79,6 +93,23 @@ public:
 
         void closeButtonPressed() override
         {
+            /*
+            juce::NativeMessageBox::showOkCancelBox(
+                juce::AlertWindow::InfoIcon,
+                "Confirm Close",
+                "Are you sure you want to quit?",
+                nullptr,
+                juce::ModalCallbackFunction::create ([this](int result)
+                {
+                    if (result != 0) // result 0 is cancel, 1 is OK
+                    {
+                        juce::JUCEApplicationBase::quit();
+                    }
+                })
+            );
+             */
+            config->saveConfig();
+            mainCmp->getMusicLibrary()->saveLibrary();
             // This is called when the user tries to close this window. Here, we'll just
             // ask the app to quit when this happens, but you can change this to do
             // whatever you need.

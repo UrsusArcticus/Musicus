@@ -6,15 +6,16 @@ using std::make_unique;
 
 using juce::FileChooser;
 using juce::FileBrowserComponent;
+using juce::Image;
+using juce::ImageCache;
 
 using namespace musicus;
 
 //==============================================================================
 MainComponent::MainComponent() {
-    loadConfigFile();
     addAndMakeVisible(createNewLibBtn);
     musicLibrary = new Library();
-    musicLibrary->onSongSelect([this](Track* s) { this->playSong(s); });
+    musicLibrary->onSongSelect([this](Song* s) { this->playSong(s); });
     createNewLibBtn.setButtonText ("Create new Library");
     createNewLibBtn.onClick = [this] { createNewLibrary(); };
     setSize (600, 400);
@@ -39,10 +40,10 @@ MainComponent::~MainComponent() {
 
 //==============================================================================
 void MainComponent::paint (juce::Graphics& g) {
-    if ( musicLibrary->hasSelectedSong() ) {
+    /*if ( musicLibrary->hasSelectedSong() ) {
         g.setColour(juce::Colour(100, 100, 100));
         g.fillRect(0, 0, 200, PLAYER_PANEL_HEIGHT);
-    }
+    }*/
 }
 
 void MainComponent::resized() {
@@ -60,7 +61,12 @@ void MainComponent::resized() {
         artistTable.setBounds(1, PLAYER_PANEL_HEIGHT, artistTableWidth, tableHeights);
         albumTable.setBounds(artistTableWidth + 1, PLAYER_PANEL_HEIGHT, albumTableWidth, tableHeights);
         songTable.setBounds(artistTableWidth + albumTableWidth + 2, PLAYER_PANEL_HEIGHT, songTableWidth, tableHeights);
+        songImage.setBounds(0, 0, 200, PLAYER_PANEL_HEIGHT);
     }
+}
+
+void MainComponent::set_library_created_handler(std::function<void(string)> f) {
+    this->library_created_event = f;
 }
 
 void MainComponent::showLibraryView() {
@@ -95,26 +101,14 @@ void MainComponent::showLibraryView() {
     songTableModel->setColours(getLookAndFeel().findColour(juce::ListBox::textColourId),
                                     getLookAndFeel().findColour(juce::ListBox::backgroundColourId));
     songTableModel->setLibrary(musicLibrary);
-    songTable.getHeader().addColumn("Track", 1, 20);
+    songTable.getHeader().addColumn("Track", 1, 40);
     songTable.getHeader().addColumn("Song Name", 2, 200);
     //songTable.getHeader().addColumn("Duration", 3, 100);
     songTable.setModel(songTableModel);
+    addAndMakeVisible(songImage);
 
     view = MusicusViewType::LIBRARY;
     resized();
-}
-
-void MainComponent::loadConfigFile() {
-    #if __linux__
-    juce::File appConfig{juce::String{"~/.config/musicus/settings.json"}};
-    #elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-    juce::File appConfig{juce::String{"settings.json"}};
-    #elif __APPLE__
-    juce::File appConfig{juce::String{"./settings.json"}};
-    #endif
-    if ( appConfig.exists() ) {
-
-    }
 }
 
 void MainComponent::createNewLibrary() {
@@ -127,13 +121,16 @@ void MainComponent::createNewLibrary() {
         if (path.compare("")) {
             removeChildComponent(&createNewLibBtn);
             musicLibrary->initializeNewLibrary(path.toStdString());
+            if ( this->library_created_event != nullptr ) {
+                library_created_event(path.toStdString());
+            }
             showLibraryView();
         }
     };
     fc->launchAsync (FileBrowserComponent::openMode | FileBrowserComponent::canSelectDirectories, librarySelectCallback);
 }
 
-void MainComponent::playSong(Track* t) {
+void MainComponent::playSong(Song* t) {
     addAndMakeVisible(songLabel);
     songLabel.setFont (juce::Font (20.0f, juce::Font::bold));
     songLabel.setBounds (205, 110, getWidth() - 205, 20);
@@ -143,6 +140,10 @@ void MainComponent::playSong(Track* t) {
     addAndMakeVisible(pauseButton);
     pauseButton.setButtonText("Pause");
     pauseButton.setBounds (205, 140, 70, 20);
+    
+    SongImage imgData = musicLibrary->loadSongImage(t);
+    Image image = ImageCache::getFromMemory(imgData.data, imgData.size);
+    songImage.setImage(image);
 
     this->repaint();
 
@@ -155,3 +156,4 @@ void MainComponent::playSong(Track* t) {
         transportSource.start();
     }
 }
+
