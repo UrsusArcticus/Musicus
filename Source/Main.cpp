@@ -76,6 +76,7 @@ public:
             config->loadConfig();
             if ( config->libraryExists() ) {
                 mainCmp->getMusicLibrary()->loadLibrary(config->getLibraryPath());
+                mainCmp->showLibraryView();
             } else {
                 //juce::NativeMessageBox::(juce::MessageBoxIconType::WarningIcon, "", "");
                 cout << "Lib existiert nicht" << endl;

@@ -15,7 +15,13 @@ std::string read_string_from_bytes(char* bytes, int start);
 
 std::string read_string_from_bytes(char* bytes, int start, int length);
 
+std::string left_pad(const std::string&, size_t, char);
+
+std::string create_timestring(double seconds);
+
 template <typename T>
 std::string print_bits(T);
+
+std::string bytes_to_string(char *bytes, int size);
 
 }

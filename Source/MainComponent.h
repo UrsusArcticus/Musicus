@@ -5,6 +5,7 @@
 #include "Library.h"
 #include "MusicusTableModel.h"
 #include "Config.h"
+#include "Timer.h"
 
 enum MusicusViewType {
     EMPTY,
@@ -24,6 +25,7 @@ public:
     
     void set_library_created_handler(std::function<void(string)> f);
     musicus::Library* getMusicLibrary() { return musicLibrary; }
+    void showLibraryView();
 
 private:
     juce::TableListBox artistTable;
@@ -37,6 +39,10 @@ private:
     MusicusViewType view = MusicusViewType::EMPTY;
     juce::Label songLabel;
     juce::Label artistLabel;
+    juce::Label albumLabel;
+    juce::Label trackLabel;
+    juce::Label currentTime;
+    juce::Label songLength;
     juce::TextButton pauseButton;
     juce::TextButton stopButton;
     juce::ImageComponent songImage;
@@ -46,6 +52,8 @@ private:
     juce::AudioDeviceManager audioDeviceManager;
     juce::AudioSourcePlayer audioSourcePlayer;
     juce::AudioTransportSource transportSource;
+    musicus::SongStatus s_status = musicus::SongStatus::NONE;
+    musicus::Timer tm;
     
     musicus::Library* musicLibrary;
     
@@ -55,7 +63,8 @@ private:
 
     void createNewLibrary();
     void playSong(musicus::Song* t);
-    void showLibraryView();
+    void paintProgressBar(juce::Graphics&);
+    void updateSongView();
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

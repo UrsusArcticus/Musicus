@@ -85,5 +85,5 @@ void musicus::Config::saveConfig() {
 }
 
 bool musicus::Config::libraryExists() {
-    return ifstream(this->library_path.append("/.metadata.musicuslib")).good();
+    return ifstream(this->library_path + "/.metadata.musicuslib").good();
 }

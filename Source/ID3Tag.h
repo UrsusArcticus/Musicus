@@ -22,7 +22,7 @@ struct ID3_Header {
     char minor_version;
     char flags;
     unsigned int tag_size;
-    int extended_header_size;
+    bool has_extended_header;
 };
 
 struct ID3_Frame {

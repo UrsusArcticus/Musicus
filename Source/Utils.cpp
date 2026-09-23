@@ -60,6 +60,19 @@ std::string musicus::read_string_from_bytes(char* bytes, int start, int length) 
     return std::string(s);
 }
 
+
+std::string musicus::left_pad(const std::string& str, size_t width, char fill = ' ') {
+    if (str.size() >= width) return str;
+    return std::string(width - str.size(), fill) + str;
+}
+
+std::string musicus::create_timestring(double seconds) {
+    int s = static_cast<int>(std::ceil(seconds));
+    int r = s % 60;
+    int m = s / 60;
+    return std::to_string(m) + ":" + left_pad(std::to_string(r), 2, '0');
+}
+
 /*
  This function is for study purposes but is not required for the functioning of Musicus
  */
@@ -77,3 +90,11 @@ std::string musicus::print_bits(T value) {
 template std::string musicus::print_bits(char value);
 template std::string musicus::print_bits(int value);
 
+string musicus::bytes_to_string(char *bytes, int size) {
+    string s;
+    for ( int i = 0; i < size; i++) {
+        s.append(std::to_string((int)bytes[i]));
+        s.append(" ");
+    }
+    return s;
+}

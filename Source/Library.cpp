@@ -9,6 +9,11 @@
 #include <vector>
 #include <fstream>
 
+#include <iostream>
+
+using std::cout;
+using std::endl;
+
 namespace fs = std::filesystem;
 
 using std::string;
@@ -72,7 +77,7 @@ void readTagAndStore(Song* t) {
     t->setArtist(tag.getFieldAsUtf8(ID3Tag_Field::ARTIST));
     t->setAlbum(tag.getFieldAsUtf8(ID3Tag_Field::ALBUM));
     t->setSongName(tag.getFieldAsUtf8(ID3Tag_Field::TITLE));
-    t->setTrack(tag.getField(ID3Tag_Field::TRACK));
+    t->setTrack(tag.getFieldAsUtf8(ID3Tag_Field::TRACK));
     t->setComposer(tag.getFieldAsUtf8(ID3Tag_Field::COMPOSER));
 }
 
@@ -221,7 +226,7 @@ void musicus::Library::onSongSelect(std::function<void(Song*)> handler) {
 bool musicus::Library::loadLibrary(string root_directory) {
     if (this->status != LibraryStatus::EMPTY) return false;
     simdjson::ondemand::parser parser;
-    string fp = root_directory.append("/.metadata.musicuslib");
+    string fp = root_directory + "/.metadata.musicuslib";
     auto text = simdjson::padded_string::load(fp);
     auto document = parser.iterate(text);
     auto root_object = document.get_object();
@@ -230,9 +235,12 @@ bool musicus::Library::loadLibrary(string root_directory) {
         Artist *artist = new Artist(string{artist_object.find_field("n").get_string().value()});
         for (auto album_object : artist_object.find_field("a").get_array()) {
             Album *album = new Album(string{album_object.find_field("n").get_string().value()});
-            for (auto song_object : album_object.find_field("s").get_array()) {
+            auto songs_array = album_object.find_field("s").get_array();
+            for (auto song_object : songs_array) {
                 Song *song = new Song();
                 song->setSongName(string{song_object.find_field("n").get_string().value()});
+                song->setArtist(artist->getName());
+                song->setAlbum(album->getName());
                 song->setFile(string{song_object.find_field("f").get_string().value()});
                 song->setTrack(string{song_object.find_field("t").get_string().value()});
                 song->setComposer(string{song_object.find_field("c").get_string().value()});
@@ -252,40 +260,49 @@ bool musicus::Library::saveLibrary() {
     builder.escape_and_append_with_quotes("data");
     builder.append_colon();
     builder.start_array();
-    for (auto artist : *artists) {
+    for ( auto it_a = artists->cbegin(); it_a != artists->cend(); ++it_a) {
         builder.start_object();
-        builder.append_key_value("n", artist->getName());
+        builder.append_key_value("n", (*it_a)->getName());
         builder.append_comma();
         builder.escape_and_append_with_quotes("a");
         builder.append_colon();
         builder.start_array();
-        for (auto album : *artist->getAlbums()) {
+        auto albums = (*it_a)->getAlbums();
+        for (auto it_al = albums->cbegin(); it_al != albums->cend(); ++it_al) {
             builder.start_object();
-            builder.append_key_value("n", album->getName());
+            builder.append_key_value("n", (*it_al)->getName());
             builder.append_comma();
             builder.escape_and_append_with_quotes("s");
             builder.append_colon();
             builder.start_array();
-            for (auto song : *album->getSongs()) {
+            auto songs = (*it_al)->getSongs();
+            for (auto it_s = songs->cbegin(); it_s != songs->cend(); ++it_s ) {
                 builder.start_object();
-                builder.append_key_value("n", song->getSongName());
+                builder.append_key_value("n", (*it_s)->getSongName());
                 builder.append_comma();
-                builder.append_key_value("f", song->getFile());
+                builder.append_key_value("f", (*it_s)->getFile());
                 builder.append_comma();
-                builder.append_key_value("t", song->getTrack());
+                builder.append_key_value("t", (*it_s)->getTrack());
                 builder.append_comma();
-                builder.append_key_value("c", song->getComposer());
+                builder.append_key_value("c", (*it_s)->getComposer());
                 builder.end_object();
-                builder.append_comma();
+                if ( next(it_s) != songs->cend() ) {
+                    builder.append_comma();
+                }
             }
             builder.end_array();
-            builder.append_comma();
+            builder.end_object();
+            if ( next(it_al) != albums->cend() ) {
+                builder.append_comma();
+            }
         }
         builder.end_array();
-        builder.append_comma();
+        builder.end_object();
+        if ( next(it_a) != artists->cend() ) {
+            builder.append_comma();
+        }
     }
     builder.end_array();
-    builder.end_object();
     builder.end_object();
     std::string_view contents{builder};
     string fp = root_directory.append("/.metadata.musicuslib");

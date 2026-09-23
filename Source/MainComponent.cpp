@@ -1,4 +1,6 @@
 #include "MainComponent.h"
+#include "Utils.h"
+
 #include <iostream>
 
 using std::unique_ptr;
@@ -30,6 +32,9 @@ MainComponent::MainComponent() {
 
     audioDeviceManager.addAudioCallback (&audioSourcePlayer);
     audioSourcePlayer.setSource (&transportSource);
+    tm.setCallback([this](){this->updateSongView();});
+    stopButton.setButtonText("Stop");
+    addChildComponent(stopButton);
 }
 
 MainComponent::~MainComponent() {
@@ -40,10 +45,9 @@ MainComponent::~MainComponent() {
 
 //==============================================================================
 void MainComponent::paint (juce::Graphics& g) {
-    /*if ( musicLibrary->hasSelectedSong() ) {
-        g.setColour(juce::Colour(100, 100, 100));
-        g.fillRect(0, 0, 200, PLAYER_PANEL_HEIGHT);
-    }*/
+    if ( musicLibrary->hasSelectedSong() ) {
+        paintProgressBar(g);
+    }
 }
 
 void MainComponent::resized() {
@@ -62,6 +66,10 @@ void MainComponent::resized() {
         albumTable.setBounds(artistTableWidth + 1, PLAYER_PANEL_HEIGHT, albumTableWidth, tableHeights);
         songTable.setBounds(artistTableWidth + albumTableWidth + 2, PLAYER_PANEL_HEIGHT, songTableWidth, tableHeights);
         songImage.setBounds(0, 0, 200, PLAYER_PANEL_HEIGHT);
+        if (musicLibrary->hasSelectedSong()) {
+            songLength.setBounds(getBounds().getWidth() - 35, 160, 30, 14);
+            this->repaint();
+        }
     }
 }
 
@@ -70,6 +78,7 @@ void MainComponent::set_library_created_handler(std::function<void(string)> f) {
 }
 
 void MainComponent::showLibraryView() {
+    removeChildComponent(&createNewLibBtn);
     addAndMakeVisible (artistTable);
     artistTableModel = new MusicusTableModel(MusicusTableType::ARTISTS);
     artistTableModel->setColours(getLookAndFeel().findColour(juce::ListBox::textColourId),
@@ -119,7 +128,6 @@ void MainComponent::createNewLibrary() {
         auto result = chooser.getURLResult();
         auto path = result.isLocalFile() ? result.getLocalFile().getFullPathName() : result.toString (true);
         if (path.compare("")) {
-            removeChildComponent(&createNewLibBtn);
             musicLibrary->initializeNewLibrary(path.toStdString());
             if ( this->library_created_event != nullptr ) {
                 library_created_event(path.toStdString());
@@ -133,13 +141,60 @@ void MainComponent::createNewLibrary() {
 void MainComponent::playSong(Song* t) {
     addAndMakeVisible(songLabel);
     songLabel.setFont (juce::Font (20.0f, juce::Font::bold));
-    songLabel.setBounds (205, 110, getWidth() - 205, 20);
+    songLabel.setBounds (205, 90, getWidth() - 205, 20);
     songLabel.setJustificationType (juce::Justification::centredLeft);
     songLabel.setText(juce::String(t->getSongName()), juce::dontSendNotification);
-
+    addAndMakeVisible(trackLabel);
+    trackLabel.setFont(juce::Font(8.0f));
+    trackLabel.setBounds(205, 110, 50, 8);
+    trackLabel.setText(juce::String(t->getTrack()), juce::dontSendNotification);
+    addAndMakeVisible(albumLabel);
+    albumLabel.setFont(juce::Font(12.0f));
+    albumLabel.setBounds(205, 125, 300, 14);
+    albumLabel.setJustificationType(juce::Justification::centredLeft);
+    albumLabel.setText(juce::String(t->getAlbum()), juce::dontSendNotification);
+    addAndMakeVisible(artistLabel);
+    artistLabel.setFont (juce::Font(12.0f));
+    artistLabel.setBounds(205, 140, 300, 14);
+    artistLabel.setJustificationType(juce::Justification::centredLeft);
+    artistLabel.setText(juce::String(t->getArtist()), juce::dontSendNotification);
+    addAndMakeVisible(currentTime);
+    currentTime.setFont(juce::Font(12.0f));
+    currentTime.setBounds(205, 160, 50, 14);
+    currentTime.setText("0:00", juce::dontSendNotification);
+    addAndMakeVisible(songLength);
+    songLength.setFont(juce::Font(12.0f));
+    
     addAndMakeVisible(pauseButton);
     pauseButton.setButtonText("Pause");
-    pauseButton.setBounds (205, 140, 70, 20);
+    pauseButton.setBounds (205, 175, 70, 20);
+    pauseButton.onClick = [this] {
+        if ( s_status == SongStatus::PLAYING ) {
+            this->transportSource.stop();
+            pauseButton.setButtonText("Play");
+            s_status = SongStatus::PAUSED;
+            tm.stop();
+        }
+        else if ( s_status == SongStatus::PAUSED || s_status == SongStatus::STOPPED ) {
+            transportSource.start();
+            pauseButton.setButtonText("Pause");
+            tm.start();
+            s_status = SongStatus::PLAYING;
+            stopButton.setVisible(true);
+        }
+    };
+    stopButton.setVisible(true);
+    stopButton.setBounds (275, 175, 70, 20);
+    stopButton.onClick = [this] {
+        transportSource.stop();
+        transportSource.setPosition(0);
+        s_status = SongStatus::STOPPED;
+        tm.stop();
+        currentTime.setText("00:00", juce::dontSendNotification);
+        pauseButton.setButtonText("Play");
+        stopButton.setVisible(false);
+        repaint();
+    };
     
     SongImage imgData = musicLibrary->loadSongImage(t);
     Image image = ImageCache::getFromMemory(imgData.data, imgData.size);
@@ -149,11 +204,35 @@ void MainComponent::playSong(Song* t) {
 
     auto* reader = formatManager.createReaderFor (juce::File(juce::String(t->getFile())));
     if (reader != nullptr) {
-        std::cout << reader->getFormatName() << std::endl;
         auto newSource = std::make_unique<juce::AudioFormatReaderSource> (reader, true);
         transportSource.setSource (newSource.get(), 0, nullptr, reader->sampleRate);
         readerSource.reset (newSource.release());
         transportSource.start();
+        s_status = SongStatus::PLAYING;
+        songLength.setText(create_timestring(transportSource.getLengthInSeconds()), juce::dontSendNotification);
+        this->resized();
+        tm.start();
+    }
+}
+
+void MainComponent::paintProgressBar(juce::Graphics& g) {
+    g.setColour(juce::Colours::aqua);
+    int x = 240;
+    int y = 168;
+    int x2 = getBounds().getWidth() - 40;
+    int l = x2 - x;
+    int p = ((transportSource.getCurrentPosition() * 100) / transportSource.getLengthInSeconds()) * l / 100;
+    g.drawLine(x, y, x + p, y, 6);
+}
+
+void MainComponent::updateSongView() {
+    if ( transportSource.isPlaying() ) {
+        currentTime.setText(create_timestring(transportSource.getCurrentPosition()), juce::dontSendNotification);
+        repaint();
+    }
+    if ( transportSource.hasStreamFinished() ) {
+        s_status = SongStatus::STOPPED;
+        tm.stop();
     }
 }
 

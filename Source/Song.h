@@ -70,4 +70,11 @@ struct SongImage {
     int size;
 };
 
+enum SongStatus {
+    NONE,
+    PLAYING,
+    PAUSED,
+    STOPPED
+};
+
 }
