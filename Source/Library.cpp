@@ -72,13 +72,17 @@ Song* musicus::Library::createSongFromFile(string audio_file) {
 	return t;
 }
 
-void readTagAndStore(Song* t) {
+void musicus::Library::readTagAndStore(Song* t) {
     ID3Tag tag(t->getFile());
-    t->setArtist(tag.getFieldAsUtf8(ID3Tag_Field::ARTIST));
-    t->setAlbum(tag.getFieldAsUtf8(ID3Tag_Field::ALBUM));
-    t->setSongName(tag.getFieldAsUtf8(ID3Tag_Field::TITLE));
-    t->setTrack(tag.getFieldAsUtf8(ID3Tag_Field::TRACK));
-    t->setComposer(tag.getFieldAsUtf8(ID3Tag_Field::COMPOSER));
+    t->setArtist(tag.getField(ID3Tag_Field::ARTIST));
+    t->setAlbum(tag.getField(ID3Tag_Field::ALBUM));
+    t->setSongName(tag.getField(ID3Tag_Field::TITLE));
+    t->setTrack(tag.getField(ID3Tag_Field::TRACK));
+    t->setComposer(tag.getField(ID3Tag_Field::COMPOSER));
+    if ( durationRequestHandler != nullptr ) {
+        double duration = durationRequestHandler(t->getFile());
+        t->setDuration( duration == 0 ? "" : create_timestring(duration) );
+    }
 }
 
 // Use File name for Track Info if an Id3 Tag is not available or can not be read
@@ -138,6 +142,13 @@ string musicus::Library::getSongNameAt(int i) {
 string musicus::Library::getSongTrackAt(int i) {
     if ( selectedAlbum && i < selectedAlbum->getSongs()->size() ) {
         return selectedAlbum->getSongs()->at(i)->getTrack();
+    }
+    return "";
+}
+
+string musicus::Library::getSongDurationAt(int i) {
+    if ( selectedAlbum && i < selectedAlbum->getSongs()->size() ) {
+        return selectedAlbum->getSongs()->at(i)->getDuration();
     }
     return "";
 }
@@ -223,6 +234,10 @@ void musicus::Library::onSongSelect(std::function<void(Song*)> handler) {
 	this->songSelectedHandler = handler;
 }
 
+void musicus::Library::setDurationRequestHandler(std::function<double(string)> handler) {
+    this->durationRequestHandler = handler;
+}
+
 bool musicus::Library::loadLibrary(string root_directory) {
     if (this->status != LibraryStatus::EMPTY) return false;
     simdjson::ondemand::parser parser;
@@ -243,6 +258,7 @@ bool musicus::Library::loadLibrary(string root_directory) {
                 song->setAlbum(album->getName());
                 song->setFile(string{song_object.find_field("f").get_string().value()});
                 song->setTrack(string{song_object.find_field("t").get_string().value()});
+                song->setDuration(string{song_object.find_field("d").get_string().value()});
                 song->setComposer(string{song_object.find_field("c").get_string().value()});
                 album->addTrack(song);
             }
@@ -284,6 +300,8 @@ bool musicus::Library::saveLibrary() {
                 builder.append_comma();
                 builder.append_key_value("t", (*it_s)->getTrack());
                 builder.append_comma();
+                builder.append_key_value("d", (*it_s)->getDuration());
+                builder.append_comma();
                 builder.append_key_value("c", (*it_s)->getComposer());
                 builder.end_object();
                 if ( next(it_s) != songs->cend() ) {
@@ -317,7 +335,11 @@ musicus::SongImage musicus::Library::loadSongImage(Song *t) {
     ID3Tag tag(t->getFile());
     ID3_PictureFrame *frame = tag.getPicture();
     SongImage img;
-    img.data = frame->data;
-    img.size = frame->size;
+    if ( frame != nullptr ) {
+        img.data = frame->data;
+        img.size = frame->size;
+    } else {
+        img.size = 0;
+    }
     return img;
 }

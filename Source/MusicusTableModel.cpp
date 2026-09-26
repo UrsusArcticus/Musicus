@@ -46,8 +46,11 @@ void musicus::MusicusTableModel::paintCell(juce::Graphics& g, int rowNumber, int
                 if (columnId == 1) {
                     g.drawText(library->getSongTrackAt(rowNumber), 2, 0, width - 4, height,
                                juce::Justification::centredLeft, true);
-                } else {
+                } else if (columnId == 2){
                     g.drawText (library->getSongNameAt(rowNumber), 2, 0, width - 4, height,
+                                juce::Justification::centredLeft, true);
+                } else {
+                    g.drawText (library->getSongDurationAt(rowNumber), 2, 0, width - 4, height,
                                 juce::Justification::centredLeft, true);
                 }
             }

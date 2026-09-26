@@ -35,6 +35,17 @@ MainComponent::MainComponent() {
     tm.setCallback([this](){this->updateSongView();});
     stopButton.setButtonText("Stop");
     addChildComponent(stopButton);
+    musicLibrary->setDurationRequestHandler([this](string file) {
+        auto* reader = formatManager.createReaderFor (juce::File(juce::String(file)));
+        if (reader != nullptr) {
+            auto newSource = std::make_unique<juce::AudioFormatReaderSource> (reader, true);
+            juce::AudioTransportSource transportSource;
+            transportSource.setSource (newSource.get(), 0, nullptr, reader->sampleRate);
+            readerSource.reset (newSource.release());
+            return transportSource.getLengthInSeconds();
+        }
+        return 0.0;
+    });
 }
 
 MainComponent::~MainComponent() {
@@ -112,7 +123,7 @@ void MainComponent::showLibraryView() {
     songTableModel->setLibrary(musicLibrary);
     songTable.getHeader().addColumn("Track", 1, 40);
     songTable.getHeader().addColumn("Song Name", 2, 200);
-    //songTable.getHeader().addColumn("Duration", 3, 100);
+    songTable.getHeader().addColumn("Duration", 3, 100);
     songTable.setModel(songTableModel);
     addAndMakeVisible(songImage);
 

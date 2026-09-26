@@ -26,9 +26,11 @@ namespace musicus {
 		std::function<void()> artistSelectedHandler;
 		std::function<void()> albumSelectedHandler;
 		std::function<void(Song*)> songSelectedHandler;
+        std::function<double(string)> durationRequestHandler;
 
 		Song* createSongFromFile(string);
-		void addSong(Song *t);
+		void addSong(Song*);
+        void readTagAndStore(Song*);
 
 	public:
 		Library();
@@ -58,6 +60,8 @@ namespace musicus {
 		string getSongNameAt(int);
         
         string getSongTrackAt(int);
+        
+        string getSongDurationAt(int);
 
 		bool hasSelectedArtist();
 
@@ -76,6 +80,8 @@ namespace musicus {
 		void onAlbumSelect(std::function<void()> handler);
 
 		void onSongSelect(std::function<void(Song*)> handler);
+        
+        void setDurationRequestHandler(std::function<double(string)> handler);
         
         bool loadLibrary(string root_directory);
 

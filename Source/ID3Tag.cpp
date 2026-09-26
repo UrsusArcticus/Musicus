@@ -116,12 +116,14 @@ ID3_Frame* parse_frame(char* bytes, int position, ID3Tag_Version version) {
     }
     
     memcpy(frame->flags, bytes + position + 8, 2);
-    frame->unicode = has_encoding_byte(frame->frame_id) && bytes[position + 10] > 0;
+    bool encoding_byte = has_encoding_byte(frame->frame_id);
+    frame->unicode = encoding_byte && bytes[position + 10] > 0;
     frame->body = new char [frame->size + 1];
     
     // +13 => 10 (Header) + 1 (Text Encoding byte) + 2 (Unicode BOM)
-    memcpy(frame->body, bytes + position + (frame->unicode ? 13 : 10), frame->size - (frame->unicode ? 3 : 0));
-    frame->body_size = frame->size - (frame->unicode ? 3 : 0); // Das Byte für das Unicode flag und die 2 byte für das Unicode BOM wieder abziehen
+    memcpy(frame->body, bytes + position + (frame->unicode ? 13 : ( encoding_byte ? 11 : 10)),
+           frame->size - (frame->unicode ? 3 : (encoding_byte ? 1 : 0)));
+    frame->body_size = frame->size - (frame->unicode ? 3 : (encoding_byte ? 1 : 0)); // Das Byte für das Unicode flag und die 2 byte für das Unicode BOM wieder abziehen
     frame->body[frame->body_size] = '\0';
     return frame;
 }
@@ -195,6 +197,9 @@ ID3_Frame* musicus::ID3Tag::getFrame(ID3Tag_Field field) {
 string musicus::ID3Tag::getField(ID3Tag_Field field) {
     ID3_Frame* frame = getFrame(field);
     if ( frame == nullptr) return "";
+    if ( frame->unicode ) {
+        return getFieldAsUtf8(field);
+    }
     return string(frame->body);
 }
 

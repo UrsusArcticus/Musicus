@@ -12,6 +12,7 @@ private:
     string artist = "";
     string album = "";
     string track = "";
+    string duration = "";
     string composer = "";
     string file = "";
 
@@ -46,6 +47,14 @@ public:
         
     void setTrack(string _track) {
         this->track = _track;
+    }
+    
+    string getDuration() {
+        return this->duration;
+    }
+    
+    void setDuration(string duration) {
+        this->duration = duration;
     }
 
     string getComposer() {

@@ -4,8 +4,6 @@
 #include <vector>
 #include <math.h>
 
-#include <iostream>
-
 using std::string;
 using std::vector;
 
