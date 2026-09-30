@@ -5,6 +5,7 @@
               cppLanguageStandard="latest">
   <MAINGROUP id="XTPUMl" name="Musicus">
     <GROUP id="{F9244B22-8679-E61E-AFD1-8819743430A6}" name="Source">
+      <FILE id="T0O7rM" name="Artist.cpp" compile="1" resource="0" file="Source/Artist.cpp"/>
       <FILE id="agMAWY" name="Song.h" compile="0" resource="0" file="Source/Song.h"/>
       <FILE id="dbuwMV" name="Timer.h" compile="0" resource="0" file="Source/Timer.h"/>
       <FILE id="AG3TKQ" name="Config.cpp" compile="1" resource="0" file="Source/Config.cpp"/>

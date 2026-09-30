@@ -2,9 +2,11 @@
 #include "Utils.h"
 
 #include <iostream>
+#include <filesystem>
 
 using std::unique_ptr;
 using std::make_unique;
+using std::filesystem::directory_iterator;
 
 using juce::FileChooser;
 using juce::FileBrowserComponent;
@@ -96,8 +98,11 @@ void MainComponent::showLibraryView() {
                                     getLookAndFeel().findColour(juce::ListBox::backgroundColourId));
     artistTableModel->setLibrary(musicLibrary);
     auto artistSelectionHandler = [this]() {
+        this->albumTable.deselectAllRows();
+        this->songTable.deselectAllRows();
         this->albumTable.updateContent();
         this->albumTable.repaint();
+        this->songTable.repaint();
     };
     musicLibrary->onArtistSelect(artistSelectionHandler);
     artistTable.getHeader().addColumn("Artist", 1, 200);
@@ -109,6 +114,7 @@ void MainComponent::showLibraryView() {
                                     getLookAndFeel().findColour(juce::ListBox::backgroundColourId));
     albumTableModel->setLibrary(musicLibrary);
     auto albumSelectionHandler = [this]() {
+        this->songTable.deselectAllRows();
         this->songTable.updateContent();
         this->songTable.repaint();
     };
@@ -206,11 +212,9 @@ void MainComponent::playSong(Song* t) {
         stopButton.setVisible(false);
         repaint();
     };
-    
-    SongImage imgData = musicLibrary->loadSongImage(t);
-    Image image = ImageCache::getFromMemory(imgData.data, imgData.size);
-    songImage.setImage(image);
 
+    loadImage(t);
+    
     this->repaint();
 
     auto* reader = formatManager.createReaderFor (juce::File(juce::String(t->getFile())));
@@ -223,6 +227,31 @@ void MainComponent::playSong(Song* t) {
         songLength.setText(create_timestring(transportSource.getLengthInSeconds()), juce::dontSendNotification);
         this->resized();
         tm.start();
+    }
+}
+
+void MainComponent::loadImage(Song* t) {
+    SongImage imgData = musicLibrary->loadSongImage(t);
+    if ( imgData.size == 0 ) {
+        std::list<string> fn{"Cover", "cover", "Front", "front", "Folder", "folder"};
+        std::list<string> image_files;
+        for( auto& entry : directory_iterator(get_directory(t->getFile()))) {
+            if ( has_image_extension(entry.path()) ) { image_files.push_back(entry.path()); }
+        }
+        auto r = std::find_if(image_files.begin(), image_files.end(), [fn] (string f) {
+            auto r = std::find(fn.begin(), fn.end(), get_filename_without_extension(f));
+            return r != fn.end();
+        });
+        if ( r != image_files.end() ) {
+            songImage.setImage(ImageCache::getFromFile(juce::File(*r)));
+        } else {
+            if (image_files.size() > 0) {
+                songImage.setImage(ImageCache::getFromFile(juce::File(image_files.front())));
+            }
+        }
+    } else {
+        Image image = ImageCache::getFromMemory(imgData.data, imgData.size);
+        songImage.setImage(image);
     }
 }
 

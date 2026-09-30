@@ -65,6 +65,7 @@ private:
     void playSong(musicus::Song* t);
     void paintProgressBar(juce::Graphics&);
     void updateSongView();
+    void loadImage(musicus::Song*);
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

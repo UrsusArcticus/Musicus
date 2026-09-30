@@ -30,9 +30,21 @@ std::vector<string> musicus::split_string(string s, string separator) {
 	return str_parts;
 }
 
-string musicus::get_file_ending(string f) {
+string musicus::get_file_extension(string f) {
 	std::vector<string> parts = musicus::split_string(f, ".");
 	return parts[parts.size() - 1];
+}
+
+string musicus::get_filename(std::string path) {
+    std::vector<string> parts = musicus::split_string(path, "/");
+    return parts[parts.size() - 1];
+}
+
+string musicus::get_filename_without_extension(string path) {
+    std::vector<string> path_parts = split_string(path, "/");
+    std::vector<string> file_parts = split_string(path_parts[path_parts.size() - 1], ".");
+    auto size = file_parts.size();
+    return file_parts[ size > 1 ? size - 2 : size - 1];
 }
 
 unsigned int musicus::read_int_from_bytes(char* bytes, int start_position) {
@@ -71,8 +83,21 @@ std::string musicus::create_timestring(double seconds) {
     return std::to_string(m) + ":" + left_pad(std::to_string(r), 2, '0');
 }
 
+std::string musicus::get_directory(std::string path) {
+    return path.substr(0, path.find_last_of("/"));
+}
+
+bool musicus::has_image_extension(string f) {
+    string image_file_extensions[] = {"jpg", "jpeg"};
+    string extension = get_file_extension(f);
+    for (string e : image_file_extensions) {
+        if ( e == extension ) { return true; }
+    }
+    return false;
+}
+
 /*
- This function is for study purposes but is not required for the functioning of Musicus
+ These functions are for study purposes but are not required for Musicus to work
  */
 template <typename T>
 std::string musicus::print_bits(T value) {
