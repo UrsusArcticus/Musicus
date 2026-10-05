@@ -89,5 +89,7 @@ namespace musicus {
         
         SongImage loadSongImage(Song *);
         
+        void sortLibrary();
+        
     };
 }

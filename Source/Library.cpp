@@ -8,11 +8,7 @@
 #include <filesystem>
 #include <vector>
 #include <fstream>
-
-#include <iostream>
-
-using std::cout;
-using std::endl;
+#include <algorithm>
 
 namespace fs = std::filesystem;
 
@@ -51,6 +47,8 @@ bool musicus::Library::initializeNewLibrary(string root_directory) {
 			this->addSong(this->createSongFromFile(f));
 		}
 	}
+    std::sort(artists->begin(), artists->end());
+    sortLibrary();
     this->status = LibraryStatus::MODIFIED;
     return true;
 }
@@ -104,7 +102,7 @@ void musicus::Library::addSong(Song *t) {
 		if (t->getArtist() == artist->getName()) {
 			for (auto album: *artist->getAlbums()) {
 				if ( album->getName() == t->getAlbum() ) {
-					album->addTrack(t);
+					album->addSong(t);
 					return;
 				}
 			}
@@ -114,7 +112,7 @@ void musicus::Library::addSong(Song *t) {
 		}
 	}
 	Album *newAlbum = new Album(t->getAlbum());
-	newAlbum->addTrack(t);
+	newAlbum->addSong(t);
 	Artist *newArtist = new Artist(t->getArtist());
 	newArtist->addAlbum(newAlbum);
 	this->artists->push_back(newArtist);
@@ -260,7 +258,7 @@ bool musicus::Library::loadLibrary(string root_directory) {
                 song->setTrack(string{song_object.find_field("t").get_string().value()});
                 song->setDuration(string{song_object.find_field("d").get_string().value()});
                 song->setComposer(string{song_object.find_field("c").get_string().value()});
-                album->addTrack(song);
+                album->addSong(song);
             }
             artist->addAlbum(album);
         }
@@ -342,4 +340,9 @@ musicus::SongImage musicus::Library::loadSongImage(Song *t) {
         img.size = 0;
     }
     return img;
+}
+
+void musicus::Library::sortLibrary() {
+    std::sort(artists->begin(), artists->end(), [](const Artist* a, const Artist* b) { return *a < *b; });
+    std::for_each(artists->begin(), artists->end(), [](auto& x) { x->sortAlbumsAndSongs(); });
 }

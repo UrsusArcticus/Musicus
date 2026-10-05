@@ -20,5 +20,6 @@ namespace musicus {
         vector<Album*>* getAlbums();
         bool hasAlbum(Album*);
         bool operator<(const Artist& other) const;
+        void sortAlbumsAndSongs();
 	};
 }

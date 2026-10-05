@@ -17,61 +17,22 @@ private:
     string file = "";
 
 public:
-    string getSongName() {
-        return song_name;
-    };
-		
-    void setSongName(string name) {
-        song_name = name;
-    };
-		
-    string getArtist() {
-        return artist;
-    };
-
-    void setArtist(string _artist) {
-        artist = _artist;
-    };
-
-    string getAlbum() {
-        return album;
-    };
-
-    void setAlbum(string _album) {
-        album = _album;
-    };
-        
-    string getTrack() {
-        return this->track;
-    }
-        
-    void setTrack(string _track) {
-        this->track = _track;
-    }
-    
-    string getDuration() {
-        return this->duration;
-    }
-    
-    void setDuration(string duration) {
-        this->duration = duration;
-    }
-
-    string getComposer() {
-        return this->composer;
-    }
-        
-    void setComposer(string _composer) {
-        this->composer = _composer;
-    }
-        
-    string getFile() {
-        return file;
-    }
-
-    void setFile(string _file) {
-        this->file = _file;
-    }
+    string getSongName();
+    void setSongName(string name);
+    string getArtist();
+    void setArtist(string _artist);
+    string getAlbum();
+    void setAlbum(string _album);
+    string getTrack();
+    void setTrack(string _track);
+    string getDuration();
+    void setDuration(string duration);
+    string getComposer();
+    void setComposer(string _composer);
+    string getFile();
+    void setFile(string _file);
+    int getTrackAsInt() const;
+    bool operator<(const Song& other) const;
 };
 
 struct SongImage {

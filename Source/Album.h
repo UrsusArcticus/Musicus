@@ -11,22 +11,13 @@ namespace musicus {
 	class Album {
 	private:
 		string name;
-		vector<Song*>* tracks;
+		vector<Song*>* songs;
 	public:
-		Album(string _name) : name(_name) {
-			tracks = new vector<Song*>();
-		}
-
-		string getName() {
-			return name;
-		}
-
-		void addTrack(Song *t) {
-			this->tracks->push_back(t);
-		}
-
-		vector<Song*>* getSongs() {
-			return tracks;
-		}
+        Album(string _name);
+        string getName();
+        void addSong(Song *t);
+        vector<Song*>* getSongs();
+        void sortSongs();
+        bool operator<(const Album& other) const;
 	};
 }

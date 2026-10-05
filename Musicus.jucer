@@ -5,30 +5,32 @@
               cppLanguageStandard="latest">
   <MAINGROUP id="XTPUMl" name="Musicus">
     <GROUP id="{F9244B22-8679-E61E-AFD1-8819743430A6}" name="Source">
+      <FILE id="Pj83QV" name="Album.h" compile="0" resource="0" file="Source/Album.h"/>
       <FILE id="T0O7rM" name="Artist.cpp" compile="1" resource="0" file="Source/Artist.cpp"/>
-      <FILE id="agMAWY" name="Song.h" compile="0" resource="0" file="Source/Song.h"/>
-      <FILE id="dbuwMV" name="Timer.h" compile="0" resource="0" file="Source/Timer.h"/>
+      <FILE id="wfuIzI" name="Artist.h" compile="0" resource="0" file="Source/Artist.h"/>
       <FILE id="AG3TKQ" name="Config.cpp" compile="1" resource="0" file="Source/Config.cpp"/>
       <FILE id="lwSdEI" name="Config.h" compile="0" resource="0" file="Source/Config.h"/>
-      <FILE id="oGID6l" name="simdjson.cpp" compile="1" resource="0" file="Source/simdjson.cpp"/>
-      <FILE id="Ati3yX" name="simdjson.h" compile="0" resource="0" file="Source/simdjson.h"/>
-      <FILE id="SmEITr" name="ID3Tag.h" compile="0" resource="0" file="Source/ID3Tag.h"/>
       <FILE id="q4WZew" name="ID3Tag.cpp" compile="1" resource="0" file="Source/ID3Tag.cpp"/>
+      <FILE id="SmEITr" name="ID3Tag.h" compile="0" resource="0" file="Source/ID3Tag.h"/>
+      <FILE id="WDKwMv" name="Library.cpp" compile="1" resource="0" file="Source/Library.cpp"/>
+      <FILE id="sxQ7R9" name="Library.h" compile="0" resource="0" file="Source/Library.h"/>
+      <FILE id="kIQpWT" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
+      <FILE id="sAnlgP" name="MainComponent.cpp" compile="1" resource="0"
+            file="Source/MainComponent.cpp"/>
+      <FILE id="Sloonb" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
       <FILE id="IYHlE7" name="MusicusTableModel.cpp" compile="1" resource="0"
             file="Source/MusicusTableModel.cpp"/>
       <FILE id="Xgo3LL" name="MusicusTableModel.h" compile="0" resource="0"
             file="Source/MusicusTableModel.h"/>
-      <FILE id="wfuIzI" name="Artist.h" compile="0" resource="0" file="Source/Artist.h"/>
-      <FILE id="kIQpWT" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
-      <FILE id="Sloonb" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
-      <FILE id="sAnlgP" name="MainComponent.cpp" compile="1" resource="0"
-            file="Source/MainComponent.cpp"/>
+      <FILE id="oGID6l" name="simdjson.cpp" compile="1" resource="0" file="Source/simdjson.cpp"/>
+      <FILE id="Ati3yX" name="simdjson.h" compile="0" resource="0" file="Source/simdjson.h"/>
+      <FILE id="lv6gul" name="Song.cpp" compile="1" resource="0" file="Source/Song.cpp"/>
+      <FILE id="agMAWY" name="Song.h" compile="0" resource="0" file="Source/Song.h"/>
+      <FILE id="dbuwMV" name="Timer.h" compile="0" resource="0" file="Source/Timer.h"/>
       <FILE id="KsVKnE" name="Utils.cpp" compile="1" resource="0" file="Source/Utils.cpp"/>
       <FILE id="BU42mM" name="Utils.h" compile="0" resource="0" file="Source/Utils.h"/>
-      <FILE id="Pj83QV" name="Album.h" compile="0" resource="0" file="Source/Album.h"/>
-      <FILE id="WDKwMv" name="Library.cpp" compile="1" resource="0" file="Source/Library.cpp"/>
-      <FILE id="sxQ7R9" name="Library.h" compile="0" resource="0" file="Source/Library.h"/>
     </GROUP>
+    <FILE id="HgsdyM" name="Album.cpp" compile="1" resource="0" file="Source/Album.cpp"/>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_USE_MP3AUDIOFORMAT="1"
                JUCE_USE_FLAC="1" JUCE_USE_OGGVORBIS="1"/>

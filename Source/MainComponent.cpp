@@ -1,7 +1,6 @@
 #include "MainComponent.h"
 #include "Utils.h"
 
-#include <iostream>
 #include <filesystem>
 
 using std::unique_ptr;
@@ -102,6 +101,7 @@ void MainComponent::showLibraryView() {
         this->songTable.deselectAllRows();
         this->albumTable.updateContent();
         this->albumTable.repaint();
+        this->songTable.updateContent();
         this->songTable.repaint();
     };
     musicLibrary->onArtistSelect(artistSelectionHandler);

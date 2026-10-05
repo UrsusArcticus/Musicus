@@ -23,5 +23,10 @@ bool musicus::Artist::hasAlbum(Album* album) {
 }
 
 bool musicus::Artist::operator<(const Artist& other) const {
-    return name < other.getName();
+    return name < other.name;
+}
+
+void musicus::Artist::sortAlbumsAndSongs() {
+    std::sort(albums->begin(), albums->end(), [](const Album* a, const Album* b) { return *a < *b; });
+    std::for_each(albums->begin(), albums->end(), [](const auto& album) { album->sortSongs(); });
 }
