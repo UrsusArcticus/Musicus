@@ -29,7 +29,7 @@ musicus::Library::Library() {
 }
 
 bool has_audiofile_ending(string f) {
-	string audio_file_extensions[] = {"mp3", "flac", "wma", "wav"};
+	string audio_file_extensions[] = {"mp3", "flac", "wma", "wav", "m4a"};
 	string extension = musicus::get_file_extension(f);
 	for (string e : audio_file_extensions) {
 		if (e == extension) {
